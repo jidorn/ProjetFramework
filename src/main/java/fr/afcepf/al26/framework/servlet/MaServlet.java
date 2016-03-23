@@ -53,7 +53,7 @@ public class MaServlet extends HttpServlet {
         if (document != null) {
             log.info("je passe avant hydrate");
             hidrateActions(document);
-            actionsMap = hidrateActionsForm(document,actionsMap);
+            hidrateActionsForm(document);
             log.info("je passe apres hydrate");
         }
     }
@@ -113,8 +113,7 @@ public class MaServlet extends HttpServlet {
         }
     }
 
-    public Map<String, ActionClasse> hidrateActionsForm(Document paramDocument,
-                                                               Map<String, ActionClasse> paramActionsMap) {
+    public void hidrateActionsForm(Document paramDocument) {
         NodeList nodeList = paramDocument.getElementsByTagName("form");
         for (int i = 0; i < nodeList.getLength(); i++) {
             NodeList nodeParent = nodeList.item(i).getChildNodes();
@@ -132,13 +131,12 @@ public class MaServlet extends HttpServlet {
                 }
             }
             for (Map.Entry<String, ActionClasse> temp :
-                    paramActionsMap.entrySet()) {
+                    actionsMap.entrySet()) {
                 if (temp.getValue().getFormName().equals(formName)){
                     temp.getValue().setFormClass(formClass);
                 }
                 log.info("hidrate form : "+temp.getValue().toString());
             }
         }
-        return paramActionsMap;
     }
 }
