@@ -1,9 +1,12 @@
 package fr.afcepf.al26.framework.servlet;
 
 import com.sun.org.apache.xerces.internal.impl.xs.opti.DefaultDocument;
+import fr.afcepf.al26.framework.action.MonAction;
 import fr.afcepf.al26.framework.action.MonActionForm;
+import fr.afcepf.al26.framework.factory.FabriqueAction;
 import fr.afcepf.al26.framework.factory.FabriqueActionForm;
 import fr.afcepf.al26.framework.fallout.ActionClasse;
+import fr.afcepf.al26.framework.utils.MyBeanPopulate;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -38,8 +41,15 @@ public class MaServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest paramHttpServletRequest,
-                          HttpServletResponse paramHttpServletResponse) throws ServletException, IOException {
+                          HttpServletResponse paramHttpServletResponse)
+            throws ServletException, IOException {
         log.info("je passe par le doPost");
+        String res = perform(paramHttpServletRequest,
+                paramHttpServletResponse);
+
+        paramHttpServletRequest.getRequestDispatcher(res)
+                .forward(paramHttpServletRequest,
+                        paramHttpServletResponse);
     }
 
     @Override
@@ -62,14 +72,23 @@ public class MaServlet extends HttpServlet {
 
     private String perform(HttpServletRequest paramRequest,
                            HttpServletResponse paramResponse) {
+        String forward = "";
+        log.info("je suis dans le perform");
         String url = paramRequest.getServletPath().substring(1);
+        log.info("le url : " + paramRequest.getServletPath().substring(1));
+        log.info("la map :" + actionsMap.toString());
         if (actionsMap.containsKey(url)) {
+            log.info("j'ai passé le premier stade");
             MonActionForm monActionForm = FabriqueActionForm.fabriqueActionForm(actionsMap.get(url).getFormClass());
             if (monActionForm.validateForm()){
-
+                log.info("j'ai passé le deuxieme stade : "+ monActionForm.validateForm());
+                MyBeanPopulate.populateBean(monActionForm,paramRequest.getParameterMap());
+                MonAction monAction = FabriqueAction.create(actionsMap.get(url).getActionName());
+                paramRequest.setAttribute(actionsMap.get(url).getFormName(),monActionForm);
+                forward = monAction.execute(monActionForm,paramRequest,paramResponse);
             }
         }
-        return "";
+        return forward;
     }
 
 
@@ -114,14 +133,13 @@ public class MaServlet extends HttpServlet {
                     log.info("le action-name " + child.getTextContent());
                 }
                 if (child.getNodeName().equals("url-pattern")) {
-                    urlPattern = child.getTextContent();
+                    urlPattern = child.getTextContent().substring(1);
                     log.info("le urlpattern " + child.getTextContent());
                 }
                 if (child.getNodeName().equals("form-name")) {
                     formName = child.getTextContent();
                     log.info("le form-name " + child.getTextContent());
                 }
-
             }
             ActionClasse monAction = new ActionClasse(formName, actionName, urlPattern);
             log.info("la classe action : " + monAction.toString());
