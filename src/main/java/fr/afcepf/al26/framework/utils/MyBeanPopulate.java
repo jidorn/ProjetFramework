@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -18,8 +19,9 @@ public class MyBeanPopulate {
 
     /**
      * methode principale pour generer le bean.
+     *
      * @param monActionForm l'objet {@link fr.afcepf.al26.framework.action.MonActionForm}.
-     * @param params le tableau des params.
+     * @param params        le tableau des params.
      */
     public static void populateBean(Object monActionForm, Map<String, String[]> params) {
         log.info("la map : " + params.toString());
@@ -36,6 +38,20 @@ public class MyBeanPopulate {
         }
     }
 
+    private static Map<String,
+            Method> getMethod(Class paramClasse)
+            throws NoSuchMethodException,
+            IllegalAccessException,
+            InvocationTargetException {
+        Map<String,Method> mapGetters = new HashMap<>();
+        for (Method methodes :
+                paramClasse.getMethods()) {
+            String nomMethode = methodes.getName().substring(3).toLowerCase();
+            mapGetters.put(nomMethode,methodes);
+        }
+        return mapGetters;
+    }
+
     private static void setMethod(Object monActionForm,
                                   Class paramClasse,
                                   Map.Entry<String,
@@ -46,7 +62,8 @@ public class MyBeanPopulate {
         String cle = entry.getKey();
         String nomMethodSet = "set" + refactoMethodName(cle);
         log.info(" le nom method " + nomMethodSet);
-        Method setter = paramClasse.getMethod(nomMethodSet, new Class[]{String.class});
+        log.info(" le type de entry " + entry.getValue().getClass());
+        Method setter = paramClasse.getMethod(nomMethodSet, new Class[]{entry.getValue().getClass()});
         setter.invoke(monActionForm, entry.getValue()[0]);
     }
 
