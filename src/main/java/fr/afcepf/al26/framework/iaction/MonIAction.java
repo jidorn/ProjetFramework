@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Interface qui permet d'implementation d'une action.
  */
-public interface MonIAction extends IAction{
+public interface MonIAction {
     /**
      * méthode qui execute des parametres en entrée et
      * renvoi un résultat sous forme de {@link String}.

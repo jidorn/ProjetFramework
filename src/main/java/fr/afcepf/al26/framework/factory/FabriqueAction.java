@@ -1,6 +1,6 @@
 package fr.afcepf.al26.framework.factory;
 
-import fr.afcepf.al26.framework.action.Action;
+import fr.afcepf.al26.framework.action.MonAction;
 
 /**
  * Classe fabrique qui permet de generer les differentes actions
@@ -10,10 +10,10 @@ public class FabriqueAction {
     private FabriqueAction() {
     }
 
-    public static Action create(String type) {
-        Action action = null;
+    public static MonAction create(String type) {
+        MonAction action = null;
         try {
-            action = (Action) Class.forName(type).newInstance();
+            action = (MonAction) Class.forName(type).newInstance();
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException paramE) {
             paramE.printStackTrace();
         }

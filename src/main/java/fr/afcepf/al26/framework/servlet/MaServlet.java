@@ -1,6 +1,8 @@
 package fr.afcepf.al26.framework.servlet;
 
 import com.sun.org.apache.xerces.internal.impl.xs.opti.DefaultDocument;
+import fr.afcepf.al26.framework.action.MonActionForm;
+import fr.afcepf.al26.framework.factory.FabriqueActionForm;
 import fr.afcepf.al26.framework.fallout.ActionClasse;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
@@ -58,6 +60,20 @@ public class MaServlet extends HttpServlet {
         }
     }
 
+    private String perform(HttpServletRequest paramRequest,
+                           HttpServletResponse paramResponse) {
+        String url = paramRequest.getServletPath().substring(1);
+        if (actionsMap.containsKey(url)) {
+            MonActionForm monActionForm = FabriqueActionForm.fabriqueActionForm(actionsMap.get(url).getFormClass());
+            if (monActionForm.validateForm()){
+
+            }
+        }
+        return "";
+    }
+
+
+
     Document getXmlFile(String context) {
 
         Document configFile = new DefaultDocument();
@@ -87,28 +103,28 @@ public class MaServlet extends HttpServlet {
             String actionName = null;
             String formName = null;
             String urlPattern = null;
-            log.info("le parent a x enfants : "+nodeParent.getLength());
+            log.info("le parent a x enfants : " + nodeParent.getLength());
             for (int j = 0; j < nodeParent.getLength(); j++) {
 
                 Node child = nodeParent.item(j);
-                log.info("le noeud est : "+child.getNodeName());
+                log.info("le noeud est : " + child.getNodeName());
                 log.info(child.getTextContent());
                 if (child.getNodeName().equals("action-name")) {
                     actionName = child.getTextContent();
-                    log.info("le action-name "+child.getTextContent());
+                    log.info("le action-name " + child.getTextContent());
                 }
                 if (child.getNodeName().equals("url-pattern")) {
                     urlPattern = child.getTextContent();
-                    log.info("le urlpattern "+child.getTextContent());
+                    log.info("le urlpattern " + child.getTextContent());
                 }
                 if (child.getNodeName().equals("form-name")) {
                     formName = child.getTextContent();
-                    log.info("le form-name "+child.getTextContent());
+                    log.info("le form-name " + child.getTextContent());
                 }
 
             }
             ActionClasse monAction = new ActionClasse(formName, actionName, urlPattern);
-            log.info("la classe action : "+monAction.toString());
+            log.info("la classe action : " + monAction.toString());
             actionsMap.put(urlPattern, monAction);
         }
     }
@@ -123,19 +139,19 @@ public class MaServlet extends HttpServlet {
                 Node child = nodeParent.item(j);
                 if (child.getNodeName().equals("form-class")) {
                     formClass = child.getTextContent();
-                    log.info("le form-class "+child.getTextContent());
+                    log.info("le form-class " + child.getTextContent());
                 }
                 if (child.getNodeName().equals("form-name")) {
                     formName = child.getTextContent();
-                    log.info("le form-name "+child.getTextContent());
+                    log.info("le form-name " + child.getTextContent());
                 }
             }
             for (Map.Entry<String, ActionClasse> temp :
                     actionsMap.entrySet()) {
-                if (temp.getValue().getFormName().equals(formName)){
+                if (temp.getValue().getFormName().equals(formName)) {
                     temp.getValue().setFormClass(formClass);
                 }
-                log.info("hidrate form : "+temp.getValue().toString());
+                log.info("hidrate form : " + temp.getValue().toString());
             }
         }
     }
