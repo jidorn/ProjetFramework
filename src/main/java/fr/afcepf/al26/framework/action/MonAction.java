@@ -23,6 +23,6 @@ public class MonAction implements MonIAction{
     public String execute(MonActionForm paramActionForm,
                           HttpServletRequest paramRequest,
                           HttpServletResponse paramResponse) {
-        return null;
+        return "";
     }
 }

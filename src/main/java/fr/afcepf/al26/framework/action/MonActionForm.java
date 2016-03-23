@@ -15,6 +15,6 @@ public class MonActionForm implements MonIActionForm {
      */
     @Override
     public boolean validateForm() {
-        return false;
+        return true;
     }
 }
