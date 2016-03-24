@@ -79,18 +79,23 @@ public class MaServlet extends HttpServlet {
         log.info("la map :" + actionsMap.toString());
         if (actionsMap.containsKey(url)) {
             log.info("j'ai passé le premier stade");
-            MonActionForm monActionForm = FabriqueActionForm.fabriqueActionForm(actionsMap.get(url).getFormClass());
-            if (monActionForm.validateForm()){
-                log.info("j'ai passé le deuxieme stade : "+ monActionForm.validateForm());
-                MyBeanPopulate.populateBean(monActionForm,paramRequest.getParameterMap());
-                MonAction monAction = FabriqueAction.create(actionsMap.get(url).getActionName());
-                paramRequest.setAttribute(actionsMap.get(url).getFormName(),monActionForm);
-                forward = monAction.execute(monActionForm,paramRequest,paramResponse);
+            MonActionForm monActionForm = FabriqueActionForm
+                    .fabriqueActionForm(actionsMap.get(url).getFormClass());
+            if (monActionForm.validateForm()) {
+                log.info("j'ai passé le deuxieme stade : "
+                        + monActionForm.validateForm());
+                MyBeanPopulate.populateBean(monActionForm,
+                        paramRequest.getParameterMap());
+                MonAction monAction = FabriqueAction
+                        .create(actionsMap.get(url).getActionName());
+                paramRequest.setAttribute(actionsMap.get(url)
+                        .getFormName(), monActionForm);
+                forward = monAction.execute(monActionForm,
+                        paramRequest, paramResponse);
             }
         }
         return forward;
     }
-
 
 
     Document getXmlFile(String context) {
