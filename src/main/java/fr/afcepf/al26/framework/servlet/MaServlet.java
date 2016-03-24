@@ -29,8 +29,15 @@ import java.util.Map;
  * Classe {@link HttpServlet} qui fait office de controller.
  */
 public class MaServlet extends HttpServlet {
+    /**
+     * le logger de la classe.
+     */
     private Logger log = Logger.getLogger(getClass());
-    Map<String, ActionClasse> actionsMap = new HashMap<>();
+
+    /**
+     * la map qui contient les actions.
+     */
+    private Map<String, ActionClasse> actionsMap = new HashMap<>();
 
     @Override
     protected void doGet(HttpServletRequest paramRequest,
@@ -70,6 +77,13 @@ public class MaServlet extends HttpServlet {
         }
     }
 
+    /**
+     * le perform.
+     *
+     * @param paramRequest  la requete.
+     * @param paramResponse la response.
+     * @return une string.
+     */
     private String perform(HttpServletRequest paramRequest,
                            HttpServletResponse paramResponse) {
         String forward = "";
@@ -97,7 +111,12 @@ public class MaServlet extends HttpServlet {
         return forward;
     }
 
-
+    /**
+     * methode pour recup le fichier xml.
+     *
+     * @param context le context.
+     * @return le {@link Document}.
+     */
     Document getXmlFile(String context) {
 
         Document configFile = new DefaultDocument();
@@ -120,6 +139,11 @@ public class MaServlet extends HttpServlet {
         return configFile;
     }
 
+    /**
+     * methode qui recupere les actions.
+     *
+     * @param paramDocument le document config.xml.
+     */
     public void hidrateActions(Document paramDocument) {
         NodeList nodeList = paramDocument.getElementsByTagName("action");
         for (int i = 0; i < nodeList.getLength(); i++) {
@@ -152,6 +176,11 @@ public class MaServlet extends HttpServlet {
         }
     }
 
+    /**
+     * methode qui recupere les actionsform.
+     *
+     * @param paramDocument le document config xml.
+     */
     public void hidrateActionsForm(Document paramDocument) {
         NodeList nodeList = paramDocument.getElementsByTagName("form");
         for (int i = 0; i < nodeList.getLength(); i++) {

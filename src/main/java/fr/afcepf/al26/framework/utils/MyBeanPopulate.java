@@ -5,6 +5,9 @@ import org.apache.log4j.Logger;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,21 +41,48 @@ public final class MyBeanPopulate {
         MonActionForm actionForm = (MonActionForm) monActionForm;
         log.info("la classe du populatebean : " + classe.toString());
         try {
-            Map<String, Method> mapSetter = getSetter(classe);
-            for (Map.Entry<String, String[]> entry :
-                    params.entrySet()) {
-                if (mapSetter.containsKey(entry.getKey())) {
-                    Class type = mapSetter.get(entry.getKey())
-                            .getParameterTypes()[0];
-                    setMethod(mapSetter.get(entry.getKey()), type,
-                            entry.getValue()[0], actionForm);
-                }
-            }
+            Map<String, Method> mapSetter = getMethods(classe, "set");
+            checkObjetOuPrimitive(params, actionForm, mapSetter, classe);
             log.info("object : " + classe.getName());
         } catch (NoSuchMethodException
                 | InvocationTargetException
                 | IllegalAccessException paramE) {
             paramE.printStackTrace();
+        }
+    }
+
+    private static void checkObjetOuPrimitive(Map<String, String[]> paramsEntry,
+                                              MonActionForm paramActionForm,
+                                              Map<String, Method>
+                                                      paramMapSetter,
+                                              Class classe)
+            throws NoSuchMethodException, IllegalAccessException,
+            InvocationTargetException {
+        for (Map.Entry<String, String[]> entry :
+                paramsEntry.entrySet()) {
+            String[] tableComplex = entry.getKey().split("\\.");
+            log.info("la taille du tableau : " + tableComplex.length);
+            if (tableComplex.length == 1
+                    && paramMapSetter.containsKey(entry.getKey())) {
+                log.info("je passe par le simple");
+                Class type = paramMapSetter.get(entry.getKey())
+                        .getParameterTypes()[0];
+                setMethod(paramMapSetter.get(entry.getKey()), type,
+                        entry.getValue()[0], paramActionForm);
+            } else if (tableComplex.length > 1) {
+                log.info("je passe par objet complexe");
+                log.info("ancienne cle : " + entry.getKey().split("\\.")[0]);
+                log.info("la nouvelle cle : " + entry.getKey().split("\\.")[1]);
+                String newKey = entry.getKey().split("\\.")[0] +".";
+                log.info("dans la methode du subMethod : "+newKey);
+
+                /*
+                Map<String, Method> subMethods =
+                        getMethods(classe, newKey);
+                checkObjetOuPrimitive(paramsEntry, paramActionForm,
+                        subMethods, classe);
+                */
+            }
         }
     }
 
@@ -67,16 +97,17 @@ public final class MyBeanPopulate {
      * @throws InvocationTargetException exception.
      */
     private static Map<String,
-            Method> getSetter(Class paramClasse)
+            Method> getMethods(Class paramClasse, String regex)
             throws NoSuchMethodException,
             IllegalAccessException,
             InvocationTargetException {
         Map<String, Method> mapSetters = new HashMap<>();
         for (Method methodes :
                 paramClasse.getMethods()) {
-            if (methodes.getName().startsWith("set")) {
+            if (methodes.getName().startsWith(regex)) {
                 String nomMethode = methodes.getName().substring(3)
                         .toLowerCase();
+                log.info("le nom de la methode :"+nomMethode);
                 mapSetters.put(nomMethode, methodes);
             }
         }
@@ -102,10 +133,6 @@ public final class MyBeanPopulate {
             IllegalAccessException,
             InvocationTargetException {
         Object valueType = null;
-        log.info("le type : " + type);
-        log.info("le type.getName : " + type.getName());
-        log.info("le type name.getClass : " + type.getClass());
-        log.info("le type est primitif ? : " + type.isPrimitive());
         if (type.isPrimitive()) {
             switch (type.getName()) {
                 case "int":
@@ -130,15 +157,22 @@ public final class MyBeanPopulate {
                     valueType = Void.TYPE;
                     break;
                 case "char":
-                    valueType = null;
+                    valueType = value.charAt(0);
                     break;
                 case "boolean":
                     valueType = Boolean.parseBoolean(value);
                     break;
             }
         } else if (type.getName()
-                .equals("java.lang.String")) {
-            valueType = String.class.getName();
+                .equals(String.class.getName())) {
+            valueType = value.toUpperCase();
+        } else if (type.getName().equals(Date.class.getName())) {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            try {
+                valueType = sdf.parse(value);
+            } catch (ParseException paramE) {
+                paramE.printStackTrace();
+            }
         }
         paramMethod.invoke(paramActionForm, valueType);
     }
