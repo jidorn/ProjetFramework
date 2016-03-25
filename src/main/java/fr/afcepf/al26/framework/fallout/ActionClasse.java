@@ -64,7 +64,7 @@ public class ActionClasse {
     /**
      * la methode généré equals
      * pour que les petits lutins se
-     * transforme en gros trolls.
+     * transforment en gros trolls.
      *
      * @param paramO le petit lutin.
      * @return un gros boolean de troll.
