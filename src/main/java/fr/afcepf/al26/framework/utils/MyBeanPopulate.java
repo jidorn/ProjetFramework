@@ -17,6 +17,13 @@ import java.util.Map;
 public final class MyBeanPopulate {
 
     /**
+     * Attribut static qui definit la longueur
+     * de la chaine de caractere "get".
+     * c'est pour que chexkstyle ne me jette pas d'erreur.
+     */
+    private static final int TAILLEGETTER = 3;
+
+    /**
      * le constructeur.
      */
     private MyBeanPopulate() {
@@ -31,7 +38,8 @@ public final class MyBeanPopulate {
      * methode principale pour generer le bean.
      *
      * @param monActionForm l'objet
-     *                      {@link fr.afcepf.al26.framework.action.MonActionForm}.
+     *                      {@link fr.afcepf.al26
+     *                      .framework.action.MonActionForm}.
      * @param params        le tableau des params.
      */
     public static void populateBean(Object monActionForm,
@@ -51,40 +59,64 @@ public final class MyBeanPopulate {
         }
     }
 
+    /**
+     * methode recursive qui fait verifie si
+     * l'entry est un objet complexe ou pas
+     * puis effectue les operations adequate.
+     *
+     * @param paramsEntry le tableau d'entry.
+     * @param paramObjet  l'objet instancié qui contient les methodes.
+     * @throws NoSuchMethodException     exception.
+     * @throws IllegalAccessException    exception.
+     * @throws InvocationTargetException exception.
+     */
     private static void checkObjetOuPrimitive(Map<String, String[]> paramsEntry,
                                               Object paramObjet)
             throws NoSuchMethodException, IllegalAccessException,
             InvocationTargetException {
+        Map<String, Method> methodeSetteurs =
+                getMethods(paramObjet.getClass(), "set");
+        for (Map.Entry<String, String[]> entry
+                : paramsEntry.entrySet()) {
+            checkEntryType(paramObjet, methodeSetteurs, entry);
+        }
+    }
 
-        Map<String, Method> methodeSetteurs = getMethods(paramObjet.getClass(),"set");
-
-        for (Map.Entry<String, String[]> entry :
-                paramsEntry.entrySet()) {
-            String[] tableComplex = entry.getKey().split("\\.");
-            log.info("la taille du tableau : " + tableComplex.length);
-            if (tableComplex.length == 1
-                    && methodeSetteurs.containsKey(entry.getKey())) {
-                log.info("je passe par le simple");
-                Class type = methodeSetteurs .get(entry.getKey())
-                        .getParameterTypes()[0];
-                setMethod(methodeSetteurs .get(entry.getKey()), type,
-                        entry.getValue()[0], paramObjet);
-            } else if (tableComplex.length > 1) {
-                log.info("je passe par objet complexe");
-                log.info("ancienne cle : " + tableComplex[0]);
-
-                String newKey = entry.getKey().substring(tableComplex[0].length()+1);
-                log.info("la nouvelle cle : " + newKey);
-                Map<String, String[]> paramsSousEntry = new HashMap<>();
-                paramsSousEntry.put(newKey,entry.getValue());
-
-                String attribut = refactoMethodName(tableComplex[0]);
-                Class c = paramObjet.getClass();
-                Method methodeGet = c.getMethod("get"+attribut,null);
-                Object sousObject = methodeGet.invoke(paramObjet,null);
-
-                checkObjetOuPrimitive(paramsSousEntry,sousObject);
-            }
+    /**
+     * methode qui verifie le type de chaque entry
+     * et fait les operations en fonction du type.
+     *
+     * @param paramObjet           l'objet instancié qui contient les methodes.
+     * @param paramMethodeSetteurs la collection de methodes.
+     * @param entry                entry a verifier.
+     * @throws NoSuchMethodException     exception.
+     * @throws IllegalAccessException    exception.
+     * @throws InvocationTargetException exception.
+     */
+    private static void checkEntryType(Object paramObjet,
+                                       Map<String, Method> paramMethodeSetteurs,
+                                       Map.Entry<String, String[]> entry)
+            throws NoSuchMethodException,
+            IllegalAccessException,
+            InvocationTargetException {
+        String[] tableComplex = entry.getKey().split("\\.");
+        log.info("la taille du tableau : " + tableComplex.length);
+        if (tableComplex.length == 1
+                && paramMethodeSetteurs.containsKey(entry.getKey())) {
+            Class type = paramMethodeSetteurs.get(entry.getKey())
+                    .getParameterTypes()[0];
+            setMethod(paramMethodeSetteurs.get(entry.getKey()), type,
+                    entry.getValue()[0], paramObjet);
+        } else if (tableComplex.length > 1) {
+            String newKey = entry.getKey()
+                    .substring(tableComplex[0].length() + 1);
+            Map<String, String[]> paramsSousEntry = new HashMap<>();
+            paramsSousEntry.put(newKey, entry.getValue());
+            String attribut = refactoMethodName(tableComplex[0]);
+            Class c = paramObjet.getClass();
+            Method methodeGet = c.getMethod("get" + attribut, null);
+            Object sousObject = methodeGet.invoke(paramObjet, null);
+            checkObjetOuPrimitive(paramsSousEntry, sousObject);
         }
     }
 
@@ -92,6 +124,8 @@ public final class MyBeanPopulate {
      * methode pour recuperer les methodes setter.
      *
      * @param paramClasse instance qui contient toutes les methodes.
+     * @param regex       la string fourni qui
+     *                    defini le debut du nom de la methode.
      * @return une {@link Map} qui contient les methodes avec
      * en cle le nom de la methode et en valeur la methode.
      * @throws NoSuchMethodException     exception.
@@ -104,12 +138,12 @@ public final class MyBeanPopulate {
             IllegalAccessException,
             InvocationTargetException {
         Map<String, Method> mapSetters = new HashMap<>();
-        for (Method methodes :
-                paramClasse.getMethods()) {
+        for (Method methodes
+                : paramClasse.getMethods()) {
             if (methodes.getName().startsWith(regex)) {
-                String nomMethode = methodes.getName().substring(3)
+                String nomMethode = methodes.getName().substring(TAILLEGETTER)
                         .toLowerCase();
-                log.info("le nom de la methode :"+nomMethode);
+                log.info("le nom de la methode :" + nomMethode);
                 mapSetters.put(nomMethode, methodes);
             }
         }
@@ -164,6 +198,9 @@ public final class MyBeanPopulate {
                 case "boolean":
                     valueType = Boolean.parseBoolean(value);
                     break;
+                default:
+                    valueType = Void.TYPE;
+                    break;
             }
         } else if (type.getName()
                 .equals(String.class.getName())) {
@@ -179,6 +216,13 @@ public final class MyBeanPopulate {
         paramMethod.invoke(paramActionForm, valueType);
     }
 
+    /**
+     * methode qui met en majuscule la premiere lettre d'un
+     * mot.
+     *
+     * @param nom le mot a capitalizer.
+     * @return le mot capitalisé.
+     */
     public static String refactoMethodName(String nom) {
         Character tempUpper = nom.toUpperCase().charAt(0);
         String reste = nom.substring(1);
