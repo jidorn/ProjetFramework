@@ -42,7 +42,7 @@ public final class MyBeanPopulate {
         log.info("la classe du populatebean : " + classe.toString());
         try {
             Map<String, Method> mapSetter = getMethods(classe, "set");
-            checkObjetOuPrimitive(params, actionForm, mapSetter, classe);
+            checkObjetOuPrimitive(params, actionForm);
             log.info("object : " + classe.getName());
         } catch (NoSuchMethodException
                 | InvocationTargetException
@@ -52,36 +52,38 @@ public final class MyBeanPopulate {
     }
 
     private static void checkObjetOuPrimitive(Map<String, String[]> paramsEntry,
-                                              MonActionForm paramActionForm,
-                                              Map<String, Method>
-                                                      paramMapSetter,
-                                              Class classe)
+                                              Object paramObjet)
             throws NoSuchMethodException, IllegalAccessException,
             InvocationTargetException {
+
+        Map<String, Method> methodeSetteurs = getMethods(paramObjet.getClass(),"set");
+
         for (Map.Entry<String, String[]> entry :
                 paramsEntry.entrySet()) {
             String[] tableComplex = entry.getKey().split("\\.");
             log.info("la taille du tableau : " + tableComplex.length);
             if (tableComplex.length == 1
-                    && paramMapSetter.containsKey(entry.getKey())) {
+                    && methodeSetteurs.containsKey(entry.getKey())) {
                 log.info("je passe par le simple");
-                Class type = paramMapSetter.get(entry.getKey())
+                Class type = methodeSetteurs .get(entry.getKey())
                         .getParameterTypes()[0];
-                setMethod(paramMapSetter.get(entry.getKey()), type,
-                        entry.getValue()[0], paramActionForm);
+                setMethod(methodeSetteurs .get(entry.getKey()), type,
+                        entry.getValue()[0], paramObjet);
             } else if (tableComplex.length > 1) {
                 log.info("je passe par objet complexe");
-                log.info("ancienne cle : " + entry.getKey().split("\\.")[0]);
-                log.info("la nouvelle cle : " + entry.getKey().split("\\.")[1]);
-                String newKey = entry.getKey().split("\\.")[0] +".";
-                log.info("dans la methode du subMethod : "+newKey);
+                log.info("ancienne cle : " + tableComplex[0]);
 
-                /*
-                Map<String, Method> subMethods =
-                        getMethods(classe, newKey);
-                checkObjetOuPrimitive(paramsEntry, paramActionForm,
-                        subMethods, classe);
-                */
+                String newKey = entry.getKey().substring(tableComplex[0].length()+1);
+                log.info("la nouvelle cle : " + newKey);
+                Map<String, String[]> paramsSousEntry = new HashMap<>();
+                paramsSousEntry.put(newKey,entry.getValue());
+
+                String attribut = refactoMethodName(tableComplex[0]);
+                Class c = paramObjet.getClass();
+                Method methodeGet = c.getMethod("get"+attribut,null);
+                Object sousObject = methodeGet.invoke(paramObjet,null);
+
+                checkObjetOuPrimitive(paramsSousEntry,sousObject);
             }
         }
     }
@@ -128,7 +130,7 @@ public final class MyBeanPopulate {
     private static void setMethod(Method paramMethod,
                                   Class type,
                                   String value,
-                                  MonActionForm paramActionForm)
+                                  Object paramActionForm)
             throws NoSuchMethodException,
             IllegalAccessException,
             InvocationTargetException {
@@ -176,11 +178,11 @@ public final class MyBeanPopulate {
         }
         paramMethod.invoke(paramActionForm, valueType);
     }
-/*
+
     public static String refactoMethodName(String nom) {
         Character tempUpper = nom.toUpperCase().charAt(0);
         String reste = nom.substring(1);
         return tempUpper + reste;
     }
-    */
+
 }
