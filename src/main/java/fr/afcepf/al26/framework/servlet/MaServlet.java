@@ -133,7 +133,8 @@ public class MaServlet extends HttpServlet {
                     .newDocumentBuilder();
             configFile = docBuilder.parse(file);
             configFile.getDocumentElement().normalize();
-        } catch (ParserConfigurationException | SAXException | IOException paramE) {
+        } catch (ParserConfigurationException
+                | SAXException | IOException paramE) {
             paramE.printStackTrace();
         }
         return configFile;
@@ -148,32 +149,31 @@ public class MaServlet extends HttpServlet {
         NodeList nodeList = paramDocument.getElementsByTagName("action");
         for (int i = 0; i < nodeList.getLength(); i++) {
             NodeList nodeParent = nodeList.item(i).getChildNodes();
-            String actionName = null;
-            String formName = null;
-            String urlPattern = null;
-            log.info("le parent a x enfants : " + nodeParent.getLength());
-            for (int j = 0; j < nodeParent.getLength(); j++) {
-
-                Node child = nodeParent.item(j);
-                log.info("le noeud est : " + child.getNodeName());
-                log.info(child.getTextContent());
-                if (child.getNodeName().equals("action-name")) {
-                    actionName = child.getTextContent();
-                    log.info("le action-name " + child.getTextContent());
-                }
-                if (child.getNodeName().equals("url-pattern")) {
-                    urlPattern = child.getTextContent().substring(1);
-                    log.info("le urlpattern " + child.getTextContent());
-                }
-                if (child.getNodeName().equals("form-name")) {
-                    formName = child.getTextContent();
-                    log.info("le form-name " + child.getTextContent());
-                }
-            }
-            ActionClasse monAction = new ActionClasse(formName, actionName, urlPattern);
-            log.info("la classe action : " + monAction.toString());
-            actionsMap.put(urlPattern, monAction);
+            actionMapBuilder(nodeParent);
         }
+    }
+
+    /**
+     * methode de creation d'une collection d'action.
+     * @param paramNodeParent le noeud parent.
+     */
+    private void actionMapBuilder(NodeList paramNodeParent) {
+        String actionName = null;
+        String formName = null;
+        String urlPattern = null;
+        for (int j = 0; j < paramNodeParent.getLength(); j++) {
+            Node child = paramNodeParent.item(j);
+            if (child.getNodeName().equals("action-name")) {
+                actionName = child.getTextContent();
+            } else if (child.getNodeName().equals("url-pattern")) {
+                urlPattern = child.getTextContent().substring(1);
+            } else if (child.getNodeName().equals("form-name")) {
+                formName = child.getTextContent();
+            }
+        }
+        ActionClasse monAction =
+                new ActionClasse(formName, actionName, urlPattern);
+        actionsMap.put(urlPattern, monAction);
     }
 
     /**
@@ -184,26 +184,32 @@ public class MaServlet extends HttpServlet {
     public void hidrateActionsForm(Document paramDocument) {
         NodeList nodeList = paramDocument.getElementsByTagName("form");
         for (int i = 0; i < nodeList.getLength(); i++) {
-            NodeList nodeParent = nodeList.item(i).getChildNodes();
-            String formClass = null;
-            String formName = null;
-            for (int j = 0; j < nodeParent.getLength(); j++) {
-                Node child = nodeParent.item(j);
-                if (child.getNodeName().equals("form-class")) {
-                    formClass = child.getTextContent();
-                    log.info("le form-class " + child.getTextContent());
-                }
-                if (child.getNodeName().equals("form-name")) {
-                    formName = child.getTextContent();
-                    log.info("le form-name " + child.getTextContent());
-                }
+            actionFormBuilder(nodeList, i);
+        }
+    }
+
+    /**
+     * methode de creation d'une collection d'actionForm.
+     * @param paramNodeList liste des noeuds.
+     * @param paramI l'index d'incrementation.
+     */
+    private void actionFormBuilder(NodeList paramNodeList, int paramI) {
+        NodeList nodeParent = paramNodeList.item(paramI).getChildNodes();
+        String formClass = null;
+        String formName = null;
+        for (int j = 0; j < nodeParent.getLength(); j++) {
+            Node child = nodeParent.item(j);
+            if (child.getNodeName().equals("form-class")) {
+                formClass = child.getTextContent();
             }
-            for (Map.Entry<String, ActionClasse> temp :
-                    actionsMap.entrySet()) {
-                if (temp.getValue().getFormName().equals(formName)) {
-                    temp.getValue().setFormClass(formClass);
-                }
-                log.info("hidrate form : " + temp.getValue().toString());
+            if (child.getNodeName().equals("form-name")) {
+                formName = child.getTextContent();
+            }
+        }
+        for (Map.Entry<String, ActionClasse> temp
+                : actionsMap.entrySet()) {
+            if (temp.getValue().getFormName().equals(formName)) {
+                temp.getValue().setFormClass(formClass);
             }
         }
     }
